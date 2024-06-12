@@ -1,0 +1,88 @@
+-- Script de ESP para Aftermath (Roblox) com nomes de jogadores, posições no mapa, distância e pontos no mapa
+-- Por OpenAI Copilot
+
+-- Configurações
+local squadColor = Color3.new(1, 1, 1) -- Cor para jogadores no seu squad (branca)
+local enemyColor = Color3.new(1, 0, 0) -- Cor para jogadores fora do seu squad (vermelha)
+local lineColor = Color3.new(1, 1, 1) -- Cor da linha que liga os jogadores
+
+local isEnabled = true -- Ativar ou desativar o ESP
+
+-- Função para desenhar a linha
+local function drawLine(player)
+    local playerCharacter = player.Character
+    if playerCharacter then
+        local playerHead = playerCharacter:WaitForChild("Head")
+        local playerScreenPos, onScreen = workspace.CurrentCamera:WorldToScreenPoint(playerHead.Position)
+        if onScreen then
+            local center = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y)
+            local line = Drawing.new("Line")
+            line.Visible = true
+            line.From = center
+            line.To = Vector2.new(playerScreenPos.X, playerScreenPos.Y + 50)
+            line.Color = lineColor
+        end
+    end
+end
+
+-- Função para atualizar o ESP
+local function updateESP()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            local playerCharacter = player.Character
+            if playerCharacter then
+                local playerHead = playerCharacter:WaitForChild("Head")
+                local playerScreenPos, onScreen = workspace.CurrentCamera:WorldToScreenPoint(playerHead.Position)
+                if onScreen then
+                    local box = Drawing.new("Square")
+                    box.Visible = true
+                    box.Size = Vector2.new(50, 50)
+                    box.Position = Vector2.new(playerScreenPos.X - 25, playerScreenPos.Y - 25)
+                    if player.Team == game.Players.LocalPlayer.Team then
+                        box.Color = squadColor
+                    else
+                        box.Color = enemyColor
+                    end
+                    drawLine(player)
+
+                    -- Adicionar nome do jogador acima da marcação
+                    local playerNameLabel = Drawing.new("Text")
+                    playerNameLabel.Visible = true
+                    playerNameLabel.Text = player.Name
+                    playerNameLabel.Position = Vector2.new(playerScreenPos.X, playerScreenPos.Y - 40)
+                    playerNameLabel.Color = box.Color
+
+                    -- Calcular e exibir a distância
+                    local playerDistance = (playerHead.Position - game.Players.LocalPlayer.Character.Head.Position).Magnitude
+                    local distanceLabel = Drawing.new("Text")
+                    distanceLabel.Visible = true
+                    distanceLabel.Text = string.format("%.1f studs", playerDistance)
+                    distanceLabel.Position = Vector2.new(playerScreenPos.X, playerScreenPos.Y - 60)
+                    distanceLabel.Color = box.Color
+
+                    -- Exibir ponto no mapa
+                    local playerMapPos = playerHead.Position
+                    local mapPoint = Drawing.new("Circle")
+                    mapPoint.Visible = true
+                    mapPoint.Radius = 3
+                    mapPoint.Position = Vector2.new(playerMapPos.X, playerMapPos.Z) -- Ignora a altura (Y)
+                    mapPoint.Color = box.Color
+                end
+            end
+        end
+    end
+end
+
+-- Atualização contínua do ESP
+game:GetService("RunService").RenderStepped:Connect(function()
+    if isEnabled then
+        updateESP()
+    end
+end)
+
+-- Comandos para ativar/desativar o ESP
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Z then
+        isEnabled = not isEnabled
+    end
+end)
