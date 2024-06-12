@@ -1,0 +1,85 @@
+--abaixo estará a Lib da nossa UI
+
+local Lib = loadstring(game:HttpGet("https://raw.githubusercontent.com/7yhx/kwargs_Ui_Library/main/source.lua"))()
+
+local UI = Lib:Create{
+    Theme = "Dark", -- or any other theme
+    Size = UDim2.new(0, 555, 0, 400) -- default
+ }
+ 
+ local Main = UI:Tab{
+    Name = "Início"
+ }
+ 
+ local Divider = Main:Divider{
+    Name = "Início shit"
+ }
+ 
+ local QuitDivider = Main:Divider{
+    Name = "Sair"
+ }
+
+-- Script de ESP para Aftermath (Roblox)
+
+-- Configurações
+local squadColor = Color3.new(1, 1, 1) -- Cor para jogadores no seu squad (branca)
+local enemyColor = Color3.new(1, 0, 0) -- Cor para jogadores fora do seu squad (vermelha)
+local lineColor = Color3.new(1, 1, 1) -- Cor da linha que liga os jogadores
+
+local isEnabled = true -- Ativar ou desativar o ESP
+
+-- Função para desenhar a linha
+local function drawLine(player)
+    local playerCharacter = player.Character
+    if playerCharacter then
+        local playerHead = playerCharacter:WaitForChild("Head")
+        local playerScreenPos, onScreen = workspace.CurrentCamera:WorldToScreenPoint(playerHead.Position)
+        if onScreen then
+            local center = Vector2.new(workspace.CurrentCamera.ViewportSize.X / 2, workspace.CurrentCamera.ViewportSize.Y)
+            local line = Drawing.new("Line")
+            line.Visible = true
+            line.From = center
+            line.To = Vector2.new(playerScreenPos.X, playerScreenPos.Y + 50)
+            line.Color = lineColor
+        end
+    end
+end
+
+-- Função para atualizar o ESP
+local function updateESP()
+    for _, player in pairs(game.Players:GetPlayers()) do
+        if player ~= game.Players.LocalPlayer then
+            local playerCharacter = player.Character
+            if playerCharacter then
+                local playerHead = playerCharacter:WaitForChild("Head")
+                local playerScreenPos, onScreen = workspace.CurrentCamera:WorldToScreenPoint(playerHead.Position)
+                if onScreen then
+                    local box = Drawing.new("Square")
+                    box.Visible = true
+                    box.Size = Vector2.new(50, 50)
+                    box.Position = Vector2.new(playerScreenPos.X - 25, playerScreenPos.Y - 25)
+                    if player.Team == game.Players.LocalPlayer.Team then
+                        box.Color = squadColor
+                    else
+                        box.Color = enemyColor
+                    end
+                    drawLine(player)
+                end
+            end
+        end
+    end
+end
+
+-- Atualização contínua do ESP
+game:GetService("RunService").RenderStepped:Connect(function()
+    if isEnabled then
+        updateESP()
+    end
+end)
+
+-- Comandos para ativar/desativar o ESP
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.Z then
+        isEnabled = not isEnabled
+    end
+end)
